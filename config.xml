@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <metadata>
+        <name>TwigPdfGenerator</name>
+        <type>plugin</type>
+        <creationDate>2025-07-02</creationDate>
+        <lastUpdate>2025-07-04</lastUpdate>
+        <author>Adam Zammit</author>
+        <authorUrl>https://www.acspri.org.au/limesurvey</authorUrl>
+        <supportUrl>https://www.acspri.org.au/limesurvey</supportUrl>
+        <version>1.0.0</version>
+        <license>GNU General Public License v3.0</license>
+        <description><![CDATA[Generate a PDF and email from a Twig template (LS 6 version ported from: https://gitlab.com/valuematch/twig-pdf-generator/)]]></description>
+    </metadata>
+    <compatibility>
+        <version>6</version>
+    </compatibility>
+</config>
