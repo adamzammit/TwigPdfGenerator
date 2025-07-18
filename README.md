@@ -43,6 +43,8 @@ Some example twig template code:
 ```
 
 
+7. When viewing responses, the action menu (...) will now have a new entry "Download custom report" which will download the report for that response
+
 ## Copyright
 - Copyright 2025 The Australian Consortium for Social and Political Research Incorporated (ACSPRI) <https://www.acspri.org.au>
 - Licence : GNU General Public License <https://www.gnu.org/licenses/gpl-3.0.html>
