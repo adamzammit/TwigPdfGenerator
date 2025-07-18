@@ -73,16 +73,18 @@ class TwigPdfGenerator extends PluginBase
         ]);
 
         $js = <<<JS
-    // Selector for old and new LS
+    // Selector for LS 6
     $("ul[id^='dropdownmenu']").each(function() {
         if ($(this).find('a.twigpdfgenerator').length > 0) {
         return;
         }
 
-       // Find the ID of the response.
-       var id = $('i.ri-download-fill.text-success').parent().attr('href').match(/\d+$/)[0]; 
-       $('<li><div data-bs-toggle="tooltip" title="" class="twigpdfgenerator">').prependTo(this)
-       $('<a class="dropdown-item twigpdfgenerator"><i class="ri-file-chart-line"></i>Download custom report</a>').attr('href', "$url" + id).prependTo(".twigpdfgenerator")
+       $('<li><div data-bs-toggle="tooltip" title="" class="twigpdfgenerator"><a class="dropdown-item twigpdfgenerator"><i class="ri-file-chart-line"></i>Download custom report</a></div></li>').prependTo(this)
+    });
+
+    $("div.twigpdfgenerator").each(function() {
+	var id = $( this ).parent().parent().find('i.ri-download-fill.text-success').parent().attr('href').match(/\d+$/)[0];
+        $( this ).find('a').attr('href', "$url" + id);
     });
 JS;
         App()->clientScript->registerScript('twig1', $js);
