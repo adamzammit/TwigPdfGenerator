@@ -102,7 +102,7 @@ JS;
 
     $surveyId = (int) $this->event->get('request')->getParam('surveyId');
 
-        if (!Permission::model()->hasSurveyPermission($surveyId, 'reponse', 'read')) {
+        if (!Permission::model()->hasSurveyPermission($surveyId, 'response', 'read')) {
             throw new CHttpException(401);
         }
 
