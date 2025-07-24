@@ -276,7 +276,11 @@ HTML;
             $pdfFilename = $this->renderTwig($this->get('pdfFilename', 'Survey', $surveyId, 'report.pdf'), $context);
             $attachment = [$pdf, $pdfFilename];
 
-            $fromEmail = $this->get('mailSender', 'Survey', $surveyId, 'sender@sender.com');
+            $survey = \Survey::model()->findByPk($surveyId);
+            $fromEmail = !empty($survey->adminemail)
+                ? $survey->adminemail
+                : \Yii::app()->getConfig('siteadminemail');
+
             $copyEmail = array_map('trim', explode(';', $this->get('mailCopy', 'Survey', $surveyId)));
             $this->sendMail($mail, $toMail, $attachment, $mailSubject, $fromEmail, $copyEmail);
 
@@ -295,6 +299,7 @@ HTML;
             $mailer->Subject = $subject;
             $mailer->setFrom($from);
             $mailer->Body = $body;
+            $mailer->IsHTML(true);
             $mailer->addStringAttachment($attachment[0],$attachment[1]);
             $mailer->sendMessage();
         }
@@ -306,6 +311,7 @@ HTML;
                 $mailer->Subject = $subject . " - [sent to: $to]";
                 $mailer->setFrom($from);
                 $mailer->Body = $body;
+                $mailer->IsHTML(true);
                 $mailer->addStringAttachment($attachment[0],$attachment[1]);
                 $mailer->sendMessage();
             }
