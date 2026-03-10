@@ -28,6 +28,7 @@ A LimeSurvey plugin that uses Twig to generate a PDF report based on response da
         - helpText - The help text in the current language
         - value - The assessment score/value
     - Twig "response" contains all response data (eg {{ response.Q01 }} will be replaced with the data entered in question Q01
+    - Twig "responsevalue" contains all response data (eg {{ responsevakye.Q01 }} will be replaced with the data entered in question Q01, and if an answer code applies, it will return the answer value instead of the answer code
     - Twig "questions" contains all questions with subitems as above (see example below)
 
 

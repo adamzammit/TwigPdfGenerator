@@ -144,7 +144,8 @@ JS;
     protected function previewPdf($surveyId, $responseId, $download = false)
     {
         $responseData = $this->api->getResponse($surveyId, $responseId);
-        $context = $this->createContext($surveyId, $responseData);
+        $responseValueData = $this->getResponseValue($surveyId, $responseId);
+        $context = $this->createContext($surveyId, $responseData, $responseValueData);
         $pdfPlate = $this->get('pdfPlate', 'Survey', $surveyId);
         if ($download ) {
             $pdfFilename = $this->renderTwig($this->get('pdfFilename', 'Survey', $surveyId, 'report.pdf'), $context);
@@ -160,7 +161,8 @@ JS;
     protected function previewMail($surveyId, $responseId)
     {
         $responseData = $this->api->getResponse($surveyId, $responseId);
-    $context = $this->createContext($surveyId, $responseData);
+        $responseValueData = $this->getResponseValue($surveyId, $responseId);
+        $context = $this->createContext($surveyId, $responseData, $responseValueData);
         $mailPlate = $this->get('mailPlate', 'Survey', $surveyId);
         $mailSubjectTemplate = $this->get('mailSubject', 'Survey', $surveyId);
         $subject = $this->renderTwig($mailSubjectTemplate, $context);
@@ -184,7 +186,7 @@ HTML;
 
         die();
     }
-    protected function createContext($surveyId, array $responseData)
+    protected function createContext($surveyId, array $responseData, $responseValueData = false)
     {
         $context = [];
         // Iterate over all questions.
@@ -238,6 +240,7 @@ HTML;
         }
 
         $context['response'] = $responseData;
+        $context['responsevalue'] = $responseValueData;
         if (!empty($responseData['token'])) {
             $context['token'] = $this->api->getToken($surveyId, $responseData['token'])->attributes;
         }
@@ -256,12 +259,13 @@ HTML;
 
         try {
             $responseData = $this->api->getResponse($surveyId, $responseId);
+            $responseValueData = $this->getResponseValue($surveyId, $responseId);
             $tokenEmail = !empty($responseData['token'])
                 ? $this->api->getToken($surveyId, $responseData['token'])->email
                 : null;
 
 
-            $context = $this->createContext($surveyId, $responseData);
+            $context = $this->createContext($surveyId, $responseData, $responseValueData);
             // Get templates.
             $mailPlate = $this->get('mailPlate', 'Survey', $surveyId);
             $pdfPlate = $this->get('pdfPlate', 'Survey', $surveyId);
@@ -449,7 +453,7 @@ HTML;
         foreach($settings as $key => $value) {
             if (strpos($key, 'Template') !== false) {
                 try {
-                    $this->renderTwig($value, $this->createContext($surveyId, []), $key);
+                    $this->renderTwig($value, $this->createContext($surveyId, [], false), $key);
                 } catch (\Throwable $e) {
                     $this->errors[$key] = [
                         'message' => $e->getMessage(),
@@ -535,5 +539,55 @@ HTML;
         $pdf->writeHTMLCell(0, 0, '','', strtr($html, ["\n" => ""]), 0, 1, 0, true, '', true);
         return $pdf->Output('report.pdf', $destination);
     }
+
+    /**
+     * Gets a survey response from the database.
+     *
+     * @param int $surveyId
+     * @param int $responseId
+     * @param bool $bMapQuestionCodes
+     * @return array|SurveyDynamic|null
+     */
+    public function getResponseValue($surveyId, $responseId)
+    {
+        $survey = \Survey::model()->findByPk($surveyId);
+        $response = \SurveyDynamic::model($surveyId)->findByPk($responseId);
+
+        if (isset($response)) {
+            // Now map the response to the question codes if possible, duplicate question codes will result in the
+            // old sidXgidXqid code for the second time the code is found
+            $fieldmap = createFieldMap($survey, 'full', null, false, $response->attributes['startlanguage']);
+            $output = array();
+            foreach ($response->attributes as $key => $value) {
+                $newKey = $key;
+                if (array_key_exists($key, $fieldmap)) {
+                    if (array_key_exists('title', $fieldmap[$key])) {
+                        $code = $fieldmap[$key]['title'];
+                        // Add subquestion code if needed
+                        if (array_key_exists('aid', $fieldmap[$key]) && isset($fieldmap[$key]['aid']) && $fieldmap[$key]['aid'] != '') {
+                            $code .= '_' . $fieldmap[$key]['aid'];
+                        }
+                        // Only add if the code does not exist yet and is not empty
+                        if (!empty($code) && !array_key_exists($code, $output)) {
+                            $newKey = $code;
+                        }
+                    }
+                }
+                //if an answer exists for this newKey and value use that instead
+                $answer = \Answer::model()->getAnswerFromCode($fieldmap[$key]['qid'], $value, $response->attributes['startlanguage']);
+                if ($answer !== null) {
+	                $output[$newKey] = html_entity_decode($answer); //allow html to pass through eg for images
+                } else {
+                        $output[$newKey] = $value;
+                }
+            }
+
+            // And return the mapped response, to further enhance we could add a method to the api that provides a
+            // simple sort of fieldmap that returns qcode index array with group, question, subquestion,
+            // possible answers, maybe even combined with relevance info so a plugin can handle display of the response
+            return $output;
+        }
+    }
+
 
 }
